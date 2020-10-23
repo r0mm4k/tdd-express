@@ -77,4 +77,22 @@ describe("User Registration", () => {
     expect(username).toBe("Username is required");
     done();
   });
+
+  it("returns Email is required when email is null/undefined", async (done) => {
+    const {
+      body: {
+        errors: { email },
+      },
+    } = await postUser({ ...validUser, email: null });
+    expect(email).toBe("Email is required");
+    done();
+  });
+
+  it("returns errors for both when username and email is null/undefined", async (done) => {
+    const {
+      body: { errors },
+    } = await postUser({ ...validUser, username: null, email: null });
+    expect(Object.keys(errors)).toEqual(["username", "email"]);
+    done();
+  });
 });
