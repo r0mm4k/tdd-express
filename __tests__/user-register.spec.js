@@ -13,9 +13,20 @@ const validUser = {
   password: "admin12345ADMIN",
 };
 
-const postUser = (user = validUser) => request(app).post("/api/1.0/users").send(user);
+const postUser = ({ user = validUser, lng = "en" } = {}) =>
+  request(app).post("/api/1.0/users").set("Accept-Language", lng).send(user);
 
 describe("User Registration", () => {
+  const userCreated = "User created";
+  const usernameRequired = "Username is required";
+  const usernameSize = "Must have 4 and max 32 characters";
+  const emailRequired = "Email is required";
+  const emailInvalid = "Email is not valid";
+  const emailInUse = "Email in use";
+  const passwordRequired = "Password is required";
+  const passwordSize = "Password must be at least 6 characters";
+  const passwordPattern = "Password must have at least 1 uppercase, 1 lowercase letter and 1 number";
+
   it("returns 200 OK when signup request is valid", async (done) => {
     const { status } = await postUser();
     expect(status).toBe(200);
@@ -26,7 +37,7 @@ describe("User Registration", () => {
     const {
       body: { message },
     } = await postUser();
-    expect(message).toBe("User created");
+    expect(message).toBe(userCreated);
     done();
   });
 
@@ -55,7 +66,7 @@ describe("User Registration", () => {
   });
 
   it("returns 400 when username is null", async (done) => {
-    const { status } = await postUser({ ...validUser, username: null });
+    const { status } = await postUser({ user: { ...validUser, username: null } });
     expect(status).toBe(400);
     done();
   });
@@ -63,7 +74,7 @@ describe("User Registration", () => {
   it("returns errors field in response body when validation error occurs", async (done) => {
     const {
       body: { errors },
-    } = await postUser({ ...validUser, username: null });
+    } = await postUser({ user: { ...validUser, username: null } });
     expect(errors).not.toBeUndefined();
     done();
   });
@@ -71,43 +82,44 @@ describe("User Registration", () => {
   it("returns errors for both when username and email is null/undefined", async (done) => {
     const {
       body: { errors },
-    } = await postUser({ ...validUser, username: null, email: null });
+    } = await postUser({ user: { ...validUser, username: null, email: null } });
     expect(Object.keys(errors)).toEqual(["username", "email"]);
     done();
   });
 
   it.each`
     field         | value               | expectedMessage
-    ${"username"} | ${null}             | ${"Username is required"}
-    ${"username"} | ${"adm"}            | ${"Must have 4 and max 32 characters"}
-    ${"username"} | ${"a".repeat(33)}   | ${"Must have 4 and max 32 characters"}
-    ${"email"}    | ${null}             | ${"Email is required"}
-    ${"email"}    | ${"mail.com"}       | ${"Email is not valid"}
-    ${"email"}    | ${"admin.mail.com"} | ${"Email is not valid"}
-    ${"email"}    | ${"admin@mail"}     | ${"Email is not valid"}
-    ${"password"} | ${null}             | ${"Password is required"}
-    ${"password"} | ${"alllowercase"}   | ${"Password must have at least 1 uppercase, 1 lowercase letter and 1 number"}
-    ${"password"} | ${"ALLUPPERCASE"}   | ${"Password must have at least 1 uppercase, 1 lowercase letter and 1 number"}
-    ${"password"} | ${"123456789"}      | ${"Password must have at least 1 uppercase, 1 lowercase letter and 1 number"}
-    ${"password"} | ${"lower123456789"} | ${"Password must have at least 1 uppercase, 1 lowercase letter and 1" + " number"}
-    ${"password"} | ${"UPPER123456789"} | ${"Password must have at least 1 uppercase, 1 lowercase letter and 1" + " number"}
+    ${"username"} | ${null}             | ${usernameRequired}
+    ${"username"} | ${"adm"}            | ${usernameSize}
+    ${"username"} | ${"a".repeat(33)}   | ${usernameSize}
+    ${"email"}    | ${null}             | ${emailRequired}
+    ${"email"}    | ${"mail.com"}       | ${emailInvalid}
+    ${"email"}    | ${"admin.mail.com"} | ${emailInvalid}
+    ${"email"}    | ${"admin@mail"}     | ${emailInvalid}
+    ${"password"} | ${null}             | ${passwordRequired}
+    ${"password"} | ${"pass"}           | ${passwordSize}
+    ${"password"} | ${"alllowercase"}   | ${passwordPattern}
+    ${"password"} | ${"ALLUPPERCASE"}   | ${passwordPattern}
+    ${"password"} | ${"123456789"}      | ${passwordPattern}
+    ${"password"} | ${"lower123456789"} | ${passwordPattern}
+    ${"password"} | ${"UPPER123456789"} | ${passwordPattern}
   `("returns $expectedMessage when $field is $value", async ({ field, expectedMessage, value }) => {
     const user = { ...validUser };
     user[field] = value;
     const {
       body: { errors },
-    } = await postUser(user);
+    } = await postUser({ user });
     expect(errors[field]).toBe(expectedMessage);
   });
 
-  it("returns Email in use when same email is already in use", async (done) => {
+  it(`returns ${emailInUse} when same email is already in use`, async (done) => {
     await User.create(validUser);
     const {
       body: {
         errors: { email },
       },
     } = await postUser();
-    expect(email).toBe("Email in use");
+    expect(email).toBe(emailInUse);
     done();
   });
 
@@ -115,8 +127,67 @@ describe("User Registration", () => {
     await User.create(validUser);
     const {
       body: { errors },
-    } = await postUser({ ...validUser, username: null });
+    } = await postUser({ user: { ...validUser, username: null } });
     expect(Object.keys(errors)).toEqual(["username", "email"]);
+    done();
+  });
+});
+
+describe("Internationalization", () => {
+  const userCreated = "Пользователь создан";
+  const usernameRequired = "Имя обязательно для заполнения";
+  const usernameSize = "Должно быть от 4 до 32 символов";
+  const emailRequired = "Почта обязательна для заполнения";
+  const emailInvalid = "Почта введена не верно";
+  const emailInUse = "Почта уже используется";
+  const passwordRequired = "Пароль обязателен для заполнения";
+  const passwordSize = "Пароль должен состоять не менее чем из 6 символов";
+  const passwordPattern = "Пароль должен состоять как минимум из 1 заглавной, 1 строчной буквы и 1 цифры";
+
+  it.each`
+    field         | value               | expectedMessage
+    ${"username"} | ${null}             | ${usernameRequired}
+    ${"username"} | ${"adm"}            | ${usernameSize}
+    ${"username"} | ${"a".repeat(33)}   | ${usernameSize}
+    ${"email"}    | ${null}             | ${emailRequired}
+    ${"email"}    | ${"mail.com"}       | ${emailInvalid}
+    ${"email"}    | ${"admin.mail.com"} | ${emailInvalid}
+    ${"email"}    | ${"admin@mail"}     | ${emailInvalid}
+    ${"password"} | ${null}             | ${passwordRequired}
+    ${"password"} | ${"pass"}           | ${passwordSize}
+    ${"password"} | ${"alllowercase"}   | ${passwordPattern}
+    ${"password"} | ${"ALLUPPERCASE"}   | ${passwordPattern}
+    ${"password"} | ${"123456789"}      | ${passwordPattern}
+    ${"password"} | ${"lower123456789"} | ${passwordPattern}
+    ${"password"} | ${"UPPER123456789"} | ${passwordPattern}
+  `(
+    "returns $expectedMessage when $field is $value when language is set as russian",
+    async ({ field, expectedMessage, value }) => {
+      const user = { ...validUser };
+      user[field] = value;
+      const {
+        body: { errors },
+      } = await postUser({ user, lng: "ru" });
+      expect(errors[field]).toBe(expectedMessage);
+    }
+  );
+
+  it(`returns ${emailInUse} when same email is already in use when language is set as russian`, async (done) => {
+    await User.create(validUser);
+    const {
+      body: {
+        errors: { email },
+      },
+    } = await postUser({ lng: "ru" });
+    expect(email).toBe(emailInUse);
+    done();
+  });
+
+  it(`returns ${userCreated} when signup request is valid is set as russian`, async (done) => {
+    const {
+      body: { message },
+    } = await postUser({ lng: "ru" });
+    expect(message).toBe(userCreated);
     done();
   });
 });

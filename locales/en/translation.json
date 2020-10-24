@@ -1,0 +1,11 @@
+{
+  "userCreated": "User created",
+  "usernameRequired": "Username is required",
+  "usernameSize": "Must have 4 and max 32 characters",
+  "emailRequired": "Email is required",
+  "emailInvalid": "Email is not valid",
+  "emailInUse": "Email in use",
+  "passwordRequired": "Password is required",
+  "passwordSize": "Password must be at least 6 characters",
+  "passwordPattern": "Password must have at least 1 uppercase, 1 lowercase letter and 1 number"
+}
