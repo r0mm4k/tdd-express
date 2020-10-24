@@ -8,6 +8,7 @@ router.post(
   "/api/1.0/users",
   check("username").notEmpty().withMessage("Username is required"),
   check("email").notEmpty().withMessage("Email is required"),
+  check("password").notEmpty().withMessage("Password is required"),
   async (req, res) => {
     const errorFormatter = ({ msg }) => msg;
     const errors = validationResult(req).formatWith(errorFormatter);

@@ -60,31 +60,11 @@ describe("User Registration", () => {
     done();
   });
 
-  it("returns validationErrors field in response body when validation error occurs", async (done) => {
+  it("returns errors field in response body when validation error occurs", async (done) => {
     const {
       body: { errors },
     } = await postUser({ ...validUser, username: null });
     expect(errors).not.toBeUndefined();
-    done();
-  });
-
-  it("returns Username is required when username is null/undefined", async (done) => {
-    const {
-      body: {
-        errors: { username },
-      },
-    } = await postUser({ ...validUser, username: null });
-    expect(username).toBe("Username is required");
-    done();
-  });
-
-  it("returns Email is required when email is null/undefined", async (done) => {
-    const {
-      body: {
-        errors: { email },
-      },
-    } = await postUser({ ...validUser, email: null });
-    expect(email).toBe("Email is required");
     done();
   });
 
@@ -94,5 +74,18 @@ describe("User Registration", () => {
     } = await postUser({ ...validUser, username: null, email: null });
     expect(Object.keys(errors)).toEqual(["username", "email"]);
     done();
+  });
+
+  it.each([
+    ["username", "Username is required"],
+    ["email", "Email is required"],
+    ["password", "Password is required"],
+  ])("when %s is null/undefined %s is received", async (field, expectedMessage) => {
+    const user = { ...validUser };
+    user[field] = null;
+    const {
+      body: { errors },
+    } = await postUser(user);
+    expect(errors[field]).toBe(expectedMessage);
   });
 });
