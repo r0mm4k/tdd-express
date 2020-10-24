@@ -129,6 +129,7 @@ describe("User Registration", () => {
     ${"password"} | ${"ALLUPPERCASE"}   | ${passwordPattern}
     ${"password"} | ${"123456789"}      | ${passwordPattern}
     ${"password"} | ${"lower123456789"} | ${passwordPattern}
+    ${"password"} | ${"lowerUPPER"}     | ${passwordPattern}
     ${"password"} | ${"UPPER123456789"} | ${passwordPattern}
   `("returns $expectedMessage when $field is $value", async ({ field, expectedMessage, value }) => {
     const user = { ...validUser };
@@ -235,6 +236,7 @@ describe("Internationalization", () => {
     ${"password"} | ${"ALLUPPERCASE"}   | ${passwordPattern}
     ${"password"} | ${"123456789"}      | ${passwordPattern}
     ${"password"} | ${"lower123456789"} | ${passwordPattern}
+    ${"password"} | ${"lowerUPPER"}     | ${passwordPattern}
     ${"password"} | ${"UPPER123456789"} | ${passwordPattern}
   `(
     "returns $expectedMessage when $field is $value when language is set as russian",
