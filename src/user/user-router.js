@@ -1,36 +1,24 @@
 const express = require("express");
+const { check, validationResult } = require("express-validator");
 const UserService = require("./user-service");
 
 const router = express.Router();
 
-const validateUsername = (req, res, next) => {
-  const { username } = req.body;
-  if (!username) {
-    req.errors = {
-      username: "Username is required",
-    };
-  }
-  next();
-};
+router.post(
+  "/api/1.0/users",
+  check("username").notEmpty().withMessage("Username is required"),
+  check("email").notEmpty().withMessage("Email is required"),
+  async (req, res) => {
+    const errorFormatter = ({ msg }) => msg;
+    const errors = validationResult(req).formatWith(errorFormatter);
 
-const validateEmail = (req, res, next) => {
-  const { email } = req.body;
-  if (!email) {
-    req.errors = {
-      ...req.errors,
-      email: "Email is required",
-    };
-  }
-  next();
-};
+    if (!errors.isEmpty()) {
+      return res.status(400).send({ errors: errors.mapped() });
+    }
 
-router.post("/api/1.0/users", validateUsername, validateEmail, async (req, res) => {
-  if (req.errors) {
-    return res.status(400).send({ errors: req.errors });
+    await UserService.save(req.body);
+    return res.send({ message: "User created" });
   }
-
-  await UserService.save(req.body);
-  return res.send({ message: "User created" });
-});
+);
 
 module.exports = router;
