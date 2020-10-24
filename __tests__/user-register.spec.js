@@ -8,9 +8,9 @@ beforeAll(() => sequelize.sync());
 beforeEach(() => User.destroy({ truncate: true }));
 
 const validUser = {
-  username: "test",
-  email: "test@mail.com",
-  password: "test12345",
+  username: "admin",
+  email: "admin@mail.com",
+  password: "admin12345ADMIN",
 };
 
 const postUser = (user = validUser) => request(app).post("/api/1.0/users").send(user);
@@ -76,13 +76,24 @@ describe("User Registration", () => {
     done();
   });
 
-  it.each([
-    ["username", "Username is required"],
-    ["email", "Email is required"],
-    ["password", "Password is required"],
-  ])("when %s is null/undefined %s is received", async (field, expectedMessage) => {
+  it.each`
+    field         | value               | expectedMessage
+    ${"username"} | ${null}             | ${"Username is required"}
+    ${"username"} | ${"adm"}            | ${"Must have 4 and max 32 characters"}
+    ${"username"} | ${"a".repeat(33)}   | ${"Must have 4 and max 32 characters"}
+    ${"email"}    | ${null}             | ${"Email is required"}
+    ${"email"}    | ${"mail.com"}       | ${"Email is not valid"}
+    ${"email"}    | ${"admin.mail.com"} | ${"Email is not valid"}
+    ${"email"}    | ${"admin@mail"}     | ${"Email is not valid"}
+    ${"password"} | ${null}             | ${"Password is required"}
+    ${"password"} | ${"alllowercase"}   | ${"Password must have at least 1 uppercase, 1 lowercase letter and 1 number"}
+    ${"password"} | ${"ALLUPPERCASE"}   | ${"Password must have at least 1 uppercase, 1 lowercase letter and 1 number"}
+    ${"password"} | ${"123456789"}      | ${"Password must have at least 1 uppercase, 1 lowercase letter and 1 number"}
+    ${"password"} | ${"lower123456789"} | ${"Password must have at least 1 uppercase, 1 lowercase letter and 1" + " number"}
+    ${"password"} | ${"UPPER123456789"} | ${"Password must have at least 1 uppercase, 1 lowercase letter and 1" + " number"}
+  `("returns $expectedMessage when $field is $value", async ({ field, expectedMessage, value }) => {
     const user = { ...validUser };
-    user[field] = null;
+    user[field] = value;
     const {
       body: { errors },
     } = await postUser(user);
