@@ -12,7 +12,19 @@ router.post(
     .bail()
     .isLength({ min: 4, max: 32 })
     .withMessage("Must have 4 and max 32 characters"),
-  check("email").notEmpty().withMessage("Email is required").bail().isEmail().withMessage("Email is not valid"),
+  check("email")
+    .notEmpty()
+    .withMessage("Email is required")
+    .bail()
+    .isEmail()
+    .withMessage("Email is not valid")
+    .bail()
+    .custom(async (email) => {
+      const user = await UserService.findByEmail(email);
+      if (user) {
+        throw new Error("Email in use");
+      }
+    }),
   check("password")
     .notEmpty()
     .withMessage("Password is required")

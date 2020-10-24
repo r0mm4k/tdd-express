@@ -99,4 +99,24 @@ describe("User Registration", () => {
     } = await postUser(user);
     expect(errors[field]).toBe(expectedMessage);
   });
+
+  it("returns Email in use when same email is already in use", async (done) => {
+    await User.create(validUser);
+    const {
+      body: {
+        errors: { email },
+      },
+    } = await postUser();
+    expect(email).toBe("Email in use");
+    done();
+  });
+
+  it("returns errors for both username is null/undefined and email is in use", async (done) => {
+    await User.create(validUser);
+    const {
+      body: { errors },
+    } = await postUser({ ...validUser, username: null });
+    expect(Object.keys(errors)).toEqual(["username", "email"]);
+    done();
+  });
 });
