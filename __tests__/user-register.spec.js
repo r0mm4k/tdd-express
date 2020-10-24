@@ -1,4 +1,5 @@
 const request = require("supertest");
+const nodemailerStub = require("nodemailer-stub");
 const app = require("../src/app");
 const User = require("../src/user/user");
 const sequelize = require("../src/config/db");
@@ -153,6 +154,16 @@ describe("User Registration", () => {
     const userList = await User.findAll();
     const { activationToken } = userList[0];
     expect(activationToken).toBeTruthy();
+    done();
+  });
+
+  it("sends an Account activation email with activationToken", async (done) => {
+    await postUser();
+    const { to, content } = nodemailerStub.interactsWithMail.lastMail();
+    expect(to[0]).toBe(validUser.email);
+    const userList = await User.findAll();
+    const { activationToken } = userList[0];
+    expect(content).toContain(activationToken);
     done();
   });
 });
