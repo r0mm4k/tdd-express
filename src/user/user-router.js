@@ -42,8 +42,12 @@ router.post(
       return res.status(400).send({ errors: errors.mapped() });
     }
 
-    await UserService.save(req.body);
-    return res.send({ message: req.t("userCreated") });
+    try {
+      await UserService.save(req.body);
+      return res.send({ message: req.t("userCreated") });
+    } catch (err) {
+      return res.status(502).send({ message: req.t(err.message) });
+    }
   }
 );
 
