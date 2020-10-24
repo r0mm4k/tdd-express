@@ -1,0 +1,10 @@
+{
+  "database": {
+    "database": "tdd-express",
+    "username": "r0mm4k",
+    "password": "12345",
+    "dialect": "sqlite",
+    "storage": ":memory:",
+    "logging": false
+  }
+}
