@@ -275,3 +275,69 @@ describe("Internationalization", () => {
     expect(message).toBe(emailFailure);
   });
 });
+
+describe("Account activation", () => {
+  it("activates the account when correct token is sent", async () => {
+    await postUser();
+    let userList = await User.findAll();
+    const { activationToken } = userList[0];
+
+    await request(app).post(`/api/1.0/users/token/${activationToken}`).send();
+    userList = await User.findAll();
+    const { inactive } = userList[0];
+    expect(inactive).toBe(false);
+  });
+
+  it("removes the token from user table after successful activation", async () => {
+    await postUser();
+    let userList = await User.findAll();
+    const { activationToken } = userList[0];
+
+    await request(app).post(`/api/1.0/users/token/${activationToken}`).send();
+    userList = await User.findAll();
+    const { activationToken: emptyToken } = userList[0];
+    expect(emptyToken).toBeFalsy();
+  });
+
+  it("does not activate the account when token is wrong", async () => {
+    await postUser();
+    const activationToken = "error-token";
+
+    await request(app).post(`/api/1.0/users/token/${activationToken}`).send();
+    const userList = await User.findAll();
+    const { inactive } = userList[0];
+    expect(inactive).toBe(true);
+  });
+
+  it("returns bad request when token is wrong", async () => {
+    await postUser();
+    const activationToken = "error-token";
+
+    const { status } = await request(app).post(`/api/1.0/users/token/${activationToken}`).send();
+    expect(status).toBe(400);
+  });
+
+  it.each`
+    language | tokenStatus  | expectedMessage
+    ${"ru"}  | ${"wrong"}   | ${"Аккаунт уже активировани или введен неверный токен"}
+    ${"en"}  | ${"wrong"}   | ${"This account is either active or the token is invalid"}
+    ${"ru"}  | ${"correct"} | ${"Аккаунт активирован"}
+    ${"en"}  | ${"correct"} | ${"Account is acivated"}
+  `(
+    "returns $expectedMessage when token is $tokenStatus and language is $language",
+    async ({ language, tokenStatus, expectedMessage }) => {
+      await postUser();
+      let activationToken = "error-token";
+
+      if (tokenStatus === "correct") {
+        const userList = await User.findAll();
+        activationToken = userList[0].activationToken;
+      }
+
+      const {
+        body: { message },
+      } = await request(app).post(`/api/1.0/users/token/${activationToken}`).set("Accept-Language", language).send();
+      expect(message).toBe(expectedMessage);
+    }
+  );
+});
