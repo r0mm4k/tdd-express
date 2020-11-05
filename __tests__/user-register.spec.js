@@ -61,6 +61,7 @@ describe("User Registration", () => {
   const passwordRequired = "Password is required";
   const passwordSize = "Password must be at least 6 characters";
   const passwordPattern = "Password must have at least 1 uppercase, 1 lowercase letter and 1 number";
+  const validationFailure = "Validation Failure";
 
   it("returns 200 OK when signup request is valid", async () => {
     const { status } = await postUser();
@@ -207,6 +208,13 @@ describe("User Registration", () => {
     const userList = await User.findAll();
     expect(userList.length).toBe(0);
   });
+
+  it(`returns ${validationFailure} message in error response body when validation fails`, async () => {
+    const {
+      body: { message },
+    } = await postUser({ user: { ...validUser, username: null } });
+    expect(message).toBe(validationFailure);
+  });
 });
 
 describe("Internationalization", () => {
@@ -220,6 +228,7 @@ describe("Internationalization", () => {
   const passwordRequired = "Пароль обязателен для заполнения";
   const passwordSize = "Пароль должен состоять не менее чем из 6 символов";
   const passwordPattern = "Пароль должен состоять как минимум из 1 заглавной, 1 строчной буквы и 1 цифры";
+  const validationFailure = "Ошибка валидации";
 
   it.each`
     field         | value               | expectedMessage
@@ -274,6 +283,13 @@ describe("Internationalization", () => {
     } = await postUser({ lng: "ru" });
     expect(message).toBe(emailFailure);
   });
+
+  it(`returns ${validationFailure} message in error response body when validation fails is set as russian`, async () => {
+    const {
+      body: { message },
+    } = await postUser({ user: { ...validUser, username: null }, lng: "ru" });
+    expect(message).toBe(validationFailure);
+  });
 });
 
 describe("Account activation", () => {
@@ -319,10 +335,10 @@ describe("Account activation", () => {
 
   it.each`
     language | tokenStatus  | expectedMessage
-    ${"ru"}  | ${"wrong"}   | ${"Аккаунт уже активировани или введен неверный токен"}
+    ${"ru"}  | ${"wrong"}   | ${"Аккаунт уже активирован или введен неверный токен"}
     ${"en"}  | ${"wrong"}   | ${"This account is either active or the token is invalid"}
     ${"ru"}  | ${"correct"} | ${"Аккаунт активирован"}
-    ${"en"}  | ${"correct"} | ${"Account is acivated"}
+    ${"en"}  | ${"correct"} | ${"Account is activated"}
   `(
     "returns $expectedMessage when token is $tokenStatus and language is $language",
     async ({ language, tokenStatus, expectedMessage }) => {
@@ -340,4 +356,36 @@ describe("Account activation", () => {
       expect(message).toBe(expectedMessage);
     }
   );
+});
+
+describe("Error Model", () => {
+  it("returns path, timestamp, message and validationErrors in response when validation failure", async () => {
+    const { body } = await postUser({ user: { ...validUser, username: null } });
+    expect(Object.keys(body)).toEqual(["path", "timestamp", "message", "errors"]);
+  });
+
+  it("returns path, timestamp, message in response when request fails other than validation error", async () => {
+    const activationToken = "error-token";
+    const { body } = await request(app).post(`/api/1.0/users/token/${activationToken}`).send();
+    expect(Object.keys(body)).toEqual(["path", "timestamp", "message"]);
+  });
+
+  it("returns path in error body", async () => {
+    const activationToken = "error-token";
+    const {
+      body: { path },
+    } = await request(app).post(`/api/1.0/users/token/${activationToken}`).send();
+    expect(path).toEqual(`/api/1.0/users/token/${activationToken}`);
+  });
+
+  it("returns timestamp in ms within 5 seconds value in error body", async () => {
+    const nowInMs = new Date().getTime();
+    const fiveSecondsLater = nowInMs + 5 * 1000;
+    const activationToken = "error-token";
+    const {
+      body: { timestamp },
+    } = await request(app).post(`/api/1.0/users/token/${activationToken}`).send();
+    expect(timestamp).toBeGreaterThan(nowInMs);
+    expect(timestamp).toBeLessThan(fiveSecondsLater);
+  });
 });

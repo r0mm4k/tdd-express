@@ -9,6 +9,7 @@
   "passwordRequired": "Пароль обязателен для заполнения",
   "passwordSize": "Пароль должен состоять не менее чем из 6 символов",
   "passwordPattern": "Пароль должен состоять как минимум из 1 заглавной, 1 строчной буквы и 1 цифры",
-  "accountActivationFailure": "Аккаунт уже активировани или введен неверный токен",
-  "accountActivationSuccess": "Аккаунт активирован"
+  "accountActivationFailure": "Аккаунт уже активирован или введен неверный токен",
+  "accountActivationSuccess": "Аккаунт активирован",
+  "validationFailure": "Ошибка валидации"
 }

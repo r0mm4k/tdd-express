@@ -10,5 +10,6 @@
   "passwordSize": "Password must be at least 6 characters",
   "passwordPattern": "Password must have at least 1 uppercase, 1 lowercase letter and 1 number",
   "accountActivationFailure": "This account is either active or the token is invalid",
-  "accountActivationSuccess": "Account is acivated"
+  "accountActivationSuccess": "Account is activated",
+  "validationFailure": "Validation Failure"
 }
