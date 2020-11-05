@@ -40,7 +40,6 @@ router.post(
     const errors = validationResult(req).formatWith(errorFormatter);
 
     if (!errors.isEmpty()) {
-      // return res.status(400).send({ errors: errors.mapped() });
       return next(new ValidationException(errors.mapped()));
     }
 
@@ -49,7 +48,6 @@ router.post(
       return res.send({ message: req.t("userCreated") });
     } catch (err) {
       next(err);
-      // return res.status(502).send({ message: req.t(err.message) });
     }
   }
 );
@@ -62,8 +60,12 @@ router.post("/api/1.0/users/token/:token", async (req, res, next) => {
     return res.send({ message: req.t("accountActivationSuccess") });
   } catch (err) {
     next(err);
-    // return res.status(400).send({ message: req.t(err.message) });
   }
+});
+
+router.get("/api/1.0/users", async (req, res) => {
+  const users = await UserService.getUsers();
+  res.send(users);
 });
 
 module.exports = router;
