@@ -70,4 +70,21 @@ describe("Listing Users", () => {
     } = await getUsers();
     expect(totalPages).toBe(2);
   });
+
+  it("returns second page users and page indicator when page is set as 1 in request parameters", async () => {
+    await addUsers(11);
+    const {
+      body: { content, page },
+    } = await getUsers().query({ page: 1 });
+    expect(content[0].username).toBe("user11");
+    expect(page).toBe(1);
+  });
+
+  it("returns first page when page is set below zero as request parameter", async () => {
+    await addUsers(11);
+    const {
+      body: { page },
+    } = await getUsers().query({ page: -5 });
+    expect(page).toBe(0);
+  });
 });
