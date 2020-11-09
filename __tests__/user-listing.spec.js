@@ -60,7 +60,14 @@ describe("Listing Users", () => {
     const {
       body: { content },
     } = await getUsers();
-    console.log(content[0]);
     expect(Object.keys(content[0])).toEqual(["id", "username", "email"]);
+  });
+
+  it("returns 2 as totalPages when there are active 15 and inactive 7 users in database", async () => {
+    await addUsers(15, 7);
+    const {
+      body: { totalPages },
+    } = await getUsers();
+    expect(totalPages).toBe(2);
   });
 });
